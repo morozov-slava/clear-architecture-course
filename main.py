@@ -21,6 +21,12 @@ def main():
         'set soap',
         'start',
         'move 50',
+        'stop',
+        'set water',
+        'turn 45',
+        'move 150',
+        'start',
+        'move 10',
         'stop'
     ]
     for command in commands:
