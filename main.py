@@ -1,11 +1,7 @@
-from src.coordinates_system import (
-    DescartesCoordinate,
-    AngleDegrees
-)
-from src.robot import (
-    Robot,
-    RobotCommandsRunner
-)
+from src.coordinate_systems.angles import AngleDegrees
+from src.coordinate_systems.descart_coordinate_system import DescartesCoordinate
+from src.robot.robot import Robot
+from src.robot.robot_controller import RobotController
 
 
 def main():
@@ -13,7 +9,7 @@ def main():
         coordinate=DescartesCoordinate(x=0.0, y=0.0), 
         angle=AngleDegrees(value=0)
     )
-    robot_commands_runner = RobotCommandsRunner(robot)
+    robot_commands_runner = RobotController(robot)
 
     commands = [
         'move 100',
@@ -30,7 +26,7 @@ def main():
         'stop'
     ]
     for command in commands:
-        robot_commands_runner.run(command)
+        robot_commands_runner.execute(command)
 
 
 if __name__ == "__main__":
