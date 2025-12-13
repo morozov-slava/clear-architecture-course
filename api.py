@@ -1,62 +1,62 @@
+from dataclasses import dataclass
 import src.robot.pure_robot as pr
 
 
-class RobotCleaner:
-    def __init__(self):
-        self.state = pr.RobotState(0, 0, 0, pr.WATER)
-        self.transfer = pr.transfer_to_cleaner
-
-    def move(self, distance: int):
-        self.state = pr.move(self.transfer, distance, self.state)
-        return self
-
-    def turn(self, angle: int):
-        self.state = pr.turn(self.transfer, angle, self.state)
-        return self
-
-    def set_water_mode(self):
-        self.state = pr.set_state(self.transfer, "water", self.state)
-        return self
-
-    def set_soap_mode(self):
-        self.state = pr.set_state(self.transfer, "soap", self.state)
-        return self
-
-    def set_brush_mode(self):
-        self.state = pr.set_state(self.transfer, "brush", self.state)
-        return self
-
-    def start(self):
-        self.state = pr.start(self.transfer, self.state)
-        return self
-
-    def stop(self):
-        self.state = pr.stop(self.transfer, self.state)
-        return self
-
-    def run_script(self, code: list[str]):
-        self.state = pr.make(self.transfer, code, self.state)
-        return self
-
-    def get_position(self) -> tuple[float, float, int]:
-        return self.state.x, self.state.y, self.state.angle
-    
-    def get_mode(self) -> str:
-        return self.state.state
+@dataclass
+class Result:
+    status: int
+    state: pr.RobotState | None
+    error_info: str | None
 
 
+class RobotCleanerApi:
 
-if __name__ == "__main__":
-    robot = RobotCleaner()
-    robot.run_script(
-        [
-            'move 100',
-            'turn -90',
-            'set soap',
-            'start',
-            'move 50',
-            'stop'
-        ]
-    )
-    print(robot.get_position())
-    print(robot.get_mode())
+    @staticmethod
+    def move(state: pr.RobotState, distance: int) -> Result:
+        try:
+            new_state = pr.move(pr.transfer_to_cleaner, distance, state)
+            return Result(200, new_state)
+        except Exception as e:
+            return Result(400, None, str(e))
+
+    @staticmethod
+    def turn(state: pr.RobotState, angle: int) -> Result:
+        try:
+            new_state = pr.turn(pr.transfer_to_cleaner, angle, state)
+            return Result(200, new_state)
+        except Exception as e:
+            return Result(400, None, str(e))
+
+    @staticmethod
+    def set_mode(state: pr.RobotState, mode: str) -> Result:
+        new_state = pr.set_state(pr.transfer_to_cleaner, mode, state)
+        return Result(200, new_state)
+
+    @staticmethod
+    def start(state: pr.RobotState) -> Result:
+        return Result(200, pr.start(pr.transfer_to_cleaner, state))
+
+    @staticmethod
+    def stop(state: pr.RobotState) -> Result:
+        return Result(200, pr.stop(pr.transfer_to_cleaner, state))
+
+
+def run_script(initial_state: pr.RobotState, code: list[str]) -> Result:
+    state = initial_state
+    for command in code:
+        parts = command.split()
+        if parts[0] == "move":
+            result = RobotCleanerApi.move(state, int(parts[1]))
+        elif parts[0] == "turn":
+            result = RobotCleanerApi.turn(state, int(parts[1]))
+        elif parts[0] == "set":
+            result = RobotCleanerApi.set_mode(state, parts[1])
+        elif parts[0] == "start":
+            result = RobotCleanerApi.start(state)
+        elif parts[0] == "stop":
+            result = RobotCleanerApi.stop(state)
+        if result.status == 400:
+            return result
+        state = result.state
+    return Result(200, state)
+

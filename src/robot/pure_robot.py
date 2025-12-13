@@ -1,7 +1,9 @@
 import math
 from collections import namedtuple
 
+
 RobotState = namedtuple("RobotState", "x y angle state")
+
 
 # режимы работы устройства очистки
 WATER = 1 # полив водой
@@ -13,18 +15,19 @@ def transfer_to_cleaner(message):
     print (message)
 
 # перемещение
-def move(transfer,dist,state):
+def move(transfer, dist, state):
     angle_rads = state.angle * (math.pi/180.0)   
     new_state = RobotState(
         state.x + dist * math.cos(angle_rads),
         state.y + dist * math.sin(angle_rads),
         state.angle,
-        state.state)  
+        state.state
+    )  
     transfer(('POS(',new_state.x,',',new_state.y,')'))
     return new_state
 
 # поворот
-def turn(transfer,turn_angle,state):
+def turn(transfer, turn_angle, state):
     new_state = RobotState(
         state.x,
         state.y,
@@ -47,7 +50,8 @@ def set_state(transfer,new_internal_state,state):
         state.x,
         state.y,
         state.angle,
-        self_state)
+        self_state
+    )
     transfer(('STATE',self_state))
     return new_state
 
@@ -62,7 +66,7 @@ def stop(transfer,state):
     return state
 
 # интерпретация набора команд
-def make(transfer,code,state):
+def make(transfer, code, state):
     for command in code:
         cmd = command.split(' ')
         if cmd[0]=='move':
