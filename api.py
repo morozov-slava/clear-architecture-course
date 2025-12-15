@@ -1,53 +1,56 @@
 import src.robot.pure_robot as pr
+from src.robot.robot_cleaner import RobotCleaner
 
 
-class RobotCleaner:
+class RobotCleanerApi:
     def __init__(self):
-        self.state = pr.RobotState(0, 0, 0, pr.WATER)
-        self.transfer = pr.transfer_to_cleaner
+        self.robot = RobotCleaner(
+            state=pr.RobotState(0, 0, 0, pr.WATER),
+            transfer=pr.transfer_to_cleaner
+        )
 
     def move(self, distance: int):
-        self.state = pr.move(self.transfer, distance, self.state)
+        self.robot.move(distance)
         return self
 
     def turn(self, angle: int):
-        self.state = pr.turn(self.transfer, angle, self.state)
+        self.robot.turn(angle)
         return self
 
     def set_water_mode(self):
-        self.state = pr.set_state(self.transfer, "water", self.state)
+        self.robot.set_mode("water")
         return self
 
     def set_soap_mode(self):
-        self.state = pr.set_state(self.transfer, "soap", self.state)
+        self.robot.set_mode("soap")
         return self
 
     def set_brush_mode(self):
-        self.state = pr.set_state(self.transfer, "brush", self.state)
+        self.robot.set_mode("brush")
         return self
 
     def start(self):
-        self.state = pr.start(self.transfer, self.state)
+        self.robot.start()
         return self
 
     def stop(self):
-        self.state = pr.stop(self.transfer, self.state)
+        self.robot.stop()
         return self
 
     def run_script(self, code: list[str]):
-        self.state = pr.make(self.transfer, code, self.state)
+        self.robot.run_script(code)
         return self
 
     def get_position(self) -> tuple[float, float, int]:
-        return self.state.x, self.state.y, self.state.angle
+        return self.robot.get_x(), self.robot.get_y(), self.robot.get_angle()
     
     def get_mode(self) -> str:
-        return self.state.state
+        return self.robot.get_mode()
 
 
 
 if __name__ == "__main__":
-    robot = RobotCleaner()
+    robot = RobotCleanerApi()
     robot.run_script(
         [
             'move 100',
