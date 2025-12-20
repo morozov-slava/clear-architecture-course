@@ -1,14 +1,23 @@
+from typing import Callable
+
 from . import pure_robot as pr
+
+
+def get_robot_command_by_name(command_name: str) -> Callable:
+    commands = {
+        "move": pr.move,
+        "turn": pr.turn,
+        "set": pr.set_state,
+        "start": pr.start,
+        "stop": pr.stop
+    }
+    return commands.get(command_name)
 
 
 class RobotApi:
 
-    def setup(self, f_move, f_turn, f_set_state, f_start, f_stop, f_transfer):
-        self.f_move = f_move
-        self.f_turn = f_turn
-        self.f_set_state = f_set_state
-        self.f_start = f_start
-        self.f_stop = f_stop
+    def setup(self, robot_commands, f_transfer):
+        self.robot_commands = robot_commands
         self.f_transfer = f_transfer
 
     def make(self, command):
@@ -16,24 +25,25 @@ class RobotApi:
             self.cleaner_state = pr.RobotState(0.0, 0.0, 0, pr.WATER)
 
         cmd = command.split(' ')
+        command_func = self.robot_commands(cmd[0])
         if cmd[0] == 'move':
-            self.cleaner_state = self.f_move(
+            self.cleaner_state = command_func(
                  self.f_transfer, int(cmd[1]), self.cleaner_state
             ) 
         elif cmd[0] == 'turn':
-            self.cleaner_state = self.f_turn(
+            self.cleaner_state = command_func(
                 self.f_transfer, int(cmd[1]), self.cleaner_state
             )
         elif cmd[0] == 'set':
-            self.cleaner_state = self.f_set_state(
+            self.cleaner_state = command_func(
                 self.f_transfer, cmd[1], self.cleaner_state
             ) 
         elif cmd[0] == 'start':
-            self.cleaner_state = self.f_start(
+            self.cleaner_state = command_func(
                 self.f_transfer, self.cleaner_state
             )
         elif cmd[0] == 'stop':
-            self.cleaner_state = self.f_stop(
+            self.cleaner_state = command_func(
                 self.f_transfer, self.cleaner_state
             )
         return self.cleaner_state
@@ -50,6 +60,6 @@ def double_move(transfer,dist,state):
     return pr.move(transfer,dist*2,state)
 
 
-if __name__ == "__main__":
-    api = RobotApi()    
-    api.setup(pr.move, pr.turn, pr.set_state, pr.start, pr.stop, transfer_to_cleaner)
+
+api = RobotApi()    
+api.setup(get_robot_command_by_name, transfer_to_cleaner)
