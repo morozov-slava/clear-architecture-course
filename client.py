@@ -1,14 +1,16 @@
-from src.robot.cleaner_api import api
+import src.robot.pure_robot as pr
+import src.robot.robot_commands as rc
 
 
-def main():
-    api('move 100')
-    api('turn -90')
-    api('set soap')
-    api('start')
-    api('move 50')
-    api('stop')
+initial_state = pr.RobotState(0, 0, 0, pr.WATER)
 
+program = [
+    rc.Move(10),
+    rc.Turn(90),
+    rc.Move(5),
+    rc.SetState('soap'),
+    rc.Start(),
+    rc.Stop()
+]
 
-if __name__ == "__main__":
-    main()
+final_state = rc.make(pr.transfer_to_cleaner, program, initial_state)
