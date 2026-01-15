@@ -1,35 +1,47 @@
-import src.robot.robot_commands as rc
-import src.robot.pure_robot as pr
-from src.robot.event_sourcing import (
-    EventStore,
-    CommandHandler 
+from src.robot.state import RobotState, CleaningMode
+from src.robot.commands import (
+    MoveCommand,
+    TurnCommand,
+    SetStateCommand,
+    StartCommand,
+    StopCommand,
 )
+from src.event_sourcing.event_store import EventStore
+from src.event_sourcing.projector import StateProjector
+from src.event_sourcing.processors import RobotProcessor
+from src.event_sourcing.command_handler import CommandHandler
 
 
 def main():
-    initial_state = pr.RobotState(0, 0, 0, pr.WATER)
-    cleaner_transfer = pr.transfer_to_cleaner
+    robot_id = "robot-001"
+
     event_store = EventStore()
-    command_handler = CommandHandler(
-        event_store=event_store,
-        initial_state=initial_state,
-        transfer=cleaner_transfer
-    )
+    initial_state = RobotState(0.0, 0.0, 0.0, CleaningMode.WATER.value)
+    projector = StateProjector(initial_state)
 
-    command_handler.run(rc.Move(10))
-    command_handler.run(rc.Turn(90))
-    command_handler.run(rc.Move(5))
-    command_handler.run(rc.SetState('soap'))
-    command_handler.run(rc.SetState('soap'))
-    command_handler.run(rc.Start())
-    command_handler.run(rc.Stop())
+    processor = RobotProcessor(event_store, projector)
+    event_store.subscribe(processor.handle)
 
-    current_state = rc.make(
-        transfer=cleaner_transfer,
-        commands=event_store.get_events(),
-        initial_state=initial_state
-    )
-    print("Текущая позиция:", current_state)
+    command_handler = CommandHandler(event_store)
+
+    commands = [
+        MoveCommand(100),
+        TurnCommand(-90),
+        SetStateCommand(CleaningMode.SOAP),
+        StartCommand(),
+        MoveCommand(50),
+        StopCommand(),
+    ]
+
+    for cmd in commands:
+        command_handler.handle(robot_id, cmd)
+
+    final_state = projector.project(event_store.get_events(robot_id))
+    print("Текущее положение робота:", final_state)
+
+    print("История событий:")
+    for i, event in enumerate(event_store.get_events(robot_id), 1):
+        print(f"{i}. {event}")
 
 
 if __name__ == "__main__":
