@@ -1,47 +1,38 @@
 from src.robot.state import RobotState, CleaningMode
 from src.robot.commands import (
-    MoveCommand,
-    TurnCommand,
-    SetStateCommand,
-    StartCommand,
-    StopCommand,
+    CommandNode,
+    Move,
+    Turn,
+    SetState,
+    Start,
+    Stop,
+    transfer_to_cleaner
 )
-from src.event_sourcing.event_store import EventStore
-from src.event_sourcing.projector import StateProjector
-from src.event_sourcing.processors import RobotProcessor
-from src.event_sourcing.command_handler import CommandHandler
+
+
+def build_program():
+    program = Move(100, 
+            next_node=lambda t,s: Turn(-90, 
+                next_node=lambda t,s: SetState('soap', 
+                    next_node=lambda t,s: Move(50,
+                        next_node=lambda t,s: Stop()
+                    )
+                )
+            )
+        )
+    return program
+
+
+def run_program(program: CommandNode, initial_state: RobotState, transfer,):
+    return program.interpret(transfer, initial_state)
 
 
 def main():
-    robot_id = "robot-001"
+    initial_state = RobotState(0, 0 , 0, CleaningMode.WATER)
+    ast_program = build_program()
+    final_state = run_program(ast_program, initial_state, transfer_to_cleaner)
+    print("Final state:", final_state)
 
-    event_store = EventStore()
-    initial_state = RobotState(0.0, 0.0, 0.0, CleaningMode.WATER.value)
-    projector = StateProjector(initial_state)
-
-    processor = RobotProcessor(event_store, projector)
-    event_store.subscribe(processor.handle)
-
-    command_handler = CommandHandler(event_store)
-
-    commands = [
-        MoveCommand(100),
-        TurnCommand(-90),
-        SetStateCommand(CleaningMode.SOAP),
-        StartCommand(),
-        MoveCommand(50),
-        StopCommand(),
-    ]
-
-    for cmd in commands:
-        command_handler.handle(robot_id, cmd)
-
-    final_state = projector.project(event_store.get_events(robot_id))
-    print("Текущее положение робота:", final_state)
-
-    print("История событий:")
-    for i, event in enumerate(event_store.get_events(robot_id), 1):
-        print(f"{i}. {event}")
 
 
 if __name__ == "__main__":
