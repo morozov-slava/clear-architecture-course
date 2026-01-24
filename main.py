@@ -1,30 +1,32 @@
-from src.coordinates_system import (
-    DescartesCoordinate,
-    AngleDegrees
+from src.robot.state import (
+    CleaningMode,
+    RobotState
 )
-from src.robot import (
-    Robot,
-    RobotCommandsRunner
+from src.robot.commands import (
+    Move,
+    Turn,
+    SetState,
+    Start,
+    Stop,
+    transfer_to_cleaner
 )
+from src.robot.commands_runner import RobotCommandsRunner
 
 
 def main():
-    robot = Robot(
-        coordinate=DescartesCoordinate(x=0.0, y=0.0), 
-        angle=AngleDegrees(value=0)
-    )
+    robot = RobotState(x=0.0, y=0.0, angle=0, state=CleaningMode.WATER)
     robot_commands_runner = RobotCommandsRunner(robot)
-
     commands = [
-        'move 100',
-        'turn -90',
-        'set soap',
-        'start',
-        'move 50',
-        'stop'
+        Move(30),
+        Turn(90),
+        Move(5),
+        Start(),
+        SetState("soap"),
+        Move(10),
+        Stop()
     ]
-    for command in commands:
-        robot_commands_runner.run(command)
+    new_state = robot_commands_runner.run(commands, transfer_to_cleaner)
+    print(new_state)
 
 
 if __name__ == "__main__":
