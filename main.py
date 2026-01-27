@@ -1,23 +1,15 @@
-from src.robot.robot_management import (
-    moveM,
-    turnM,
-    startM,
-    stopM,
-    setStateM,
-)
+from src.robot.start import program_start, initial_state
 import src.robot.pure_robot as pr
 
-
 program = (
-    setStateM(pr.transfer_to_cleaner, 'water')
-    .bind(lambda _: moveM(pr.transfer_to_cleaner, 10))
-    .bind(lambda _: turnM(pr.transfer_to_cleaner, 90))
-    .bind(lambda _: moveM(pr.transfer_to_cleaner, 5))
-    .bind(lambda _: startM(pr.transfer_to_cleaner))
-    .bind(lambda _: stopM(pr.transfer_to_cleaner))
+    program_start(pr.transfer_to_cleaner)
+    .bind(lambda r: r.move(10))
+    .bind(lambda r: r.turn(90))
+    .bind(lambda r: r.move(5))
+    .bind(lambda r: r.set_mode("water"))
+    .bind(lambda r: r.start())
+    .bind(lambda r: r.stop())
 )
 
-initial_state = pr.RobotState(0, 0, 0, pr.WATER)
-_, final_state = program.run(initial_state)
-
+caps, final_state = program.run(initial_state())
 print(final_state)
